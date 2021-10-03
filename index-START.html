@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JS + CSS Clock</title>
+</head>
+<body>
+
+
+    <div class="clock">
+      <div class="clock-face">
+        <div class="hand hour-hand"></div>
+        <div class="hand min-hand"></div>
+        <div class="hand second-hand"></div>
+      </div>
+    </div>
+
+
+  <style>
+    html {
+      background: #018DED url(./Fireborn.JPG) center;
+      background-size: 100% 100%;
+      
+      font-family: 'helvetica neue';
+      text-align: center;
+      font-size: 10px;
+    }
+
+    body {
+      margin: 0;
+      font-size: 2rem;
+      display: flex;
+      flex: 1;
+      min-height: 100vh;
+      align-items: center;
+    }
+
+    .clock {
+      width: 30rem;
+      height: 30rem;
+      border: 5px solid rgb(212, 59, 59);
+      border-radius: 50%;
+      margin: 50px auto;
+      position: relative;
+      padding: 2rem;
+      box-shadow:
+        0 0 0 15px rgba(228, 118, 15, 0.2),
+        inset 0 0 0 6px rgba(218, 230, 54, 0.15),
+        inset 0 0 120px rgba(247, 224, 20, 0.5),
+        0 0 100px rgba(255, 94, 0, 0.91);
+    }
+
+    .clock-face {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      /* transform: translateY(-3px);  */
+      /*account for the height of the clock hands*/
+    }
+
+    .clock-face::after {
+      content: '';
+      display: block;
+      width: 12px;
+      height: 12px;
+      background-color:rgba(250, 161, 27, 0.78);
+      top: 50%;
+      left: 50%;
+      border-radius: 100%;
+      position: absolute;
+      transform: translate(-50%, -25%); 
+      /*原本這塊的定位註冊點是左上角，為了置中對齊所以要用transform再修正寬高的一半*/
+    } 
+
+    .hour-hand {
+      width: 35%;
+      height: 6px;
+      background: rgba(253, 117, 5, 0.35);
+      position: absolute;
+      top: 50%;
+      left: 15%;
+      transform: translateY(-50%);
+      /*hour-hand的定位點預設是左上角，為了指針置中對齊所以用transform修正這區塊高度的一半*/
+      transform: rotate(90deg);
+      /*讓初始畫面從-90度，變成0度的位置*/
+      transform-origin: 100%;
+      /*讓div從最右邊作為基準點開始旋轉*/
+      transition: all 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.15, 1.27);
+      /*去chrome開發者工具中，css的部分加入transition-timing參數，
+      去玩一個想要的function再複製貼上就好*/
+    }
+
+    .min-hand {
+      width: 50%;
+      height: 5px;
+      background: rgba(253, 117, 5, 0.35);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      transform: rotate(90deg);
+      transform-origin: 100%;
+      transition: all 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.15, 1.27);
+
+    }
+
+    .second-hand {
+      width: 50%;
+      height: 2px;
+      background: rgba(243, 245, 247, 0.6);
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      transform: rotate(90deg);
+      transform-origin: 100%;
+      transition: all 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.15, 1.27);
+
+    }
+
+  </style>
+
+  <script>
+    const secondHand = document.querySelector('.second-hand')
+    const minHand = document.querySelector('.min-hand')
+    const hourHand = document.querySelector('.hour-hand')
+    let secCount = 0
+    let minCount = 0
+    let hourCount = 0
+
+    function setDate() {
+      // console.log('tik-tok') 
+      // 確認 setInterval() 有每秒都執行一次這個function
+
+      const now = new Date() 
+      //真正要取得的是現在的時間
+
+      //-----秒---------
+      
+      const seconds = now.getSeconds()
+      
+      const secDeg = (seconds / 60) * 360 + 90 + secCount * 360
+      //每分鐘有60秒，每走一秒就是1/60的圓周乘以360度，每秒走6度
+      //因為<div>最初的css設定是-90度，所以補加90度，才會正常顯示
+
+      //又因為每轉超過360度，角度又會從0開始計算，導致畫面指針會短暫以錯誤的方式迴轉過去。
+      //所以設定一個counter，來計算時、分、秒每經過一次360度時就加1，讓畫面可以
+      //smooth的轉動下去
+
+      secondHand.style.transform = `rotate(${secDeg}deg)`
+      
+      if (seconds === 59) secCount++ 
+      //59秒時，counter就加1，讓下一輪0秒時，css參數會加360度
+
+      console.log('sec:', seconds, secCount, secDeg)
+      
+      //-----分----------
+
+      const mins = now.getMinutes()
+
+      let minDeg = (mins / 60) * 360 + 90 + minCount * 360
+
+      minDeg += seconds * (360 / 60) / 60
+      //分針每分鐘前進六度(360度/60分鐘)，秒針在前進時，分針同時也會緩慢前進才符合常理。
+      //這樣的話，每秒鐘則會前進： 6 (度) / 60 (秒) = 0.1 （度/秒）。
+  
+      minHand.style.transform = `rotate(${minDeg}deg)`
+      
+      if (mins === 59 && seconds === 59) minCount++
+
+      console.log('min:', mins, minCount, minDeg)
+
+      //-----時---------
+
+      const hours = now.getHours()
+
+      let hourDeg = (hours / 12) * 360 + 90 + hourCount * 360
+      
+      hourDeg += mins * (360 / 12) / 60
+      //時針每小時前進30度(360度/12小時)
+      //等同於每60分鐘前進30度===>>故得知每分鐘前進30/60＝0.5度
+
+      hourHand.style.transform = `rotate(${hourDeg}deg`
+
+      if (hours === 11 && mins === 59 && seconds === 59 ) hourCount++
+
+      console.log('hour:',hours,hourCount,hourDeg)
+
+    }
+
+    setInterval(setDate, 1000)
+    //每間隔 1000毫秒（1秒）執行一次 setDate()
+
+    setDate() 
+    //先跑一次setDate()，第一次進網頁的初始畫面才會是正確時間
+
+  </script>
+</body>
+</html>
